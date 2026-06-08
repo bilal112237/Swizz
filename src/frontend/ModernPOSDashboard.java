@@ -1,0 +1,257 @@
+package frontend;
+
+import dao.ProductDAO;
+import dao.SaleDAO;
+import model.Product;
+import model.Sale;
+import model.SaleItem;
+import model.User;
+
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.List;
+
+public class ModernPOSDashboard extends JFrame {
+
+    DefaultTableModel cartModel;
+    JTable cartTable;
+    JLabel totalLabel;
+    JPanel productPanel;
+    private User currentUser;
+
+    public ModernPOSDashboard(User user) {
+        this.currentUser = user;
+        setTitle("Swizz | Cashier");
+        setSize(1100, 650);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(Color.WHITE);
+        topBar.setPreferredSize(new Dimension(0, 50));
+        topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 220, 220)));
+
+        JLabel title = new JLabel("Point of Sale");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 10));
+
+
+        String cashierName = (user != null) ? user.getUsername() : "Guest";
+        JLabel cashier = new JLabel("Cashier: " + cashierName);
+        cashier.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        cashier.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 20));
+
+        topBar.add(title, BorderLayout.WEST);
+        topBar.add(cashier, BorderLayout.EAST);
+
+        productPanel = new JPanel();
+        productPanel.setBackground(new Color(40, 40, 40));
+        productPanel.setLayout(new GridLayout(0, 3, 15, 15));
+        productPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JScrollPane productScroll = new JScrollPane(productPanel);
+        productScroll.setBorder(null);
+
+        JPanel cartPanel = new JPanel(new BorderLayout());
+        cartPanel.setBackground(Color.WHITE);
+        cartPanel.setPreferredSize(new Dimension(400, 0)); // Made slightly wider
+        cartPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JLabel cartTitle = new JLabel("Cart Summary");
+        cartTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+
+        String[] cols = {"ID", "Product", "Price", "Qty", "Subtotal"};
+        cartModel = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Disable editing
+            }
+        };
+
+        cartTable = new JTable(cartModel);
+        cartTable.setRowHeight(26);
+
+        // Hide the ID column (Column 0) from view, but keep data
+        cartTable.getColumnModel().getColumn(0).setMinWidth(0);
+        cartTable.getColumnModel().getColumn(0).setMaxWidth(0);
+        cartTable.getColumnModel().getColumn(0).setWidth(0);
+
+        JScrollPane tableScroll = new JScrollPane(cartTable);
+
+        totalLabel = new JLabel("Total: $0.00");
+        totalLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        totalLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+
+        JButton payBtn = new JButton("PAY NOW");
+        payBtn.setBackground(new Color(33, 150, 243));
+        payBtn.setForeground(Color.WHITE);
+        payBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        payBtn.setFocusPainted(false);
+        payBtn.setPreferredSize(new Dimension(0, 50));
+
+        // PAY BUTTON LOGIC
+        payBtn.addActionListener(this::handlePayment);
+
+        cartPanel.add(cartTitle, BorderLayout.NORTH);
+        cartPanel.add(tableScroll, BorderLayout.CENTER);
+
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBackground(Color.WHITE);
+        bottomPanel.add(totalLabel, BorderLayout.CENTER);
+        bottomPanel.add(payBtn, BorderLayout.SOUTH);
+
+        cartPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        // ===== ADD TO FRAME =====
+        add(topBar, BorderLayout.NORTH);
+        add(productScroll, BorderLayout.CENTER); // Changed to scroll
+        add(cartPanel, BorderLayout.EAST);
+
+        // LOAD REAL DATA
+        loadProductsFromDB();
+
+        setVisible(true);
+    }
+
+    private void loadProductsFromDB() {
+        productPanel.removeAll(); // Clear dummy buttons
+
+        try {
+            List<Product> products = new ProductDAO().getAllProducts();
+
+            for (Product p : products) {
+                // Create Button text with HTML for formatting
+                String btnText = "<html><center>" + p.getName() + "<br>$" + p.getPrice() + "</center></html>";
+                JButton btn = new JButton(btnText);
+
+                // Style
+                btn.setBackground(new Color(60, 60, 60));
+                btn.setForeground(Color.WHITE);
+                btn.setFocusPainted(false);
+                btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                btn.setBorder(new LineBorder(new Color(80, 80, 80), 2));
+                btn.setPreferredSize(new Dimension(100, 100));
+
+                // Add Click Event: Add to Cart
+                btn.addActionListener(e -> addToCart(p));
+
+                productPanel.add(btn);
+            }
+
+            productPanel.revalidate();
+            productPanel.repaint();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading products");
+        }
+    }
+
+    // ==========================================
+    // 2. ADD TO CART LOGIC
+    // ==========================================
+    private void addToCart(Product p) {
+        // Check if product already exists in table
+        for (int i = 0; i < cartModel.getRowCount(); i++) {
+            int existingId = Integer.parseInt(cartModel.getValueAt(i, 0).toString());
+            if (existingId == p.getId()) {
+                // Update Quantity
+                int currentQty = Integer.parseInt(cartModel.getValueAt(i, 3).toString());
+                int newQty = currentQty + 1;
+
+                // Check Stock
+                if (newQty > p.getStockQuantity()) {
+                    JOptionPane.showMessageDialog(this, "Out of Stock!");
+                    return;
+                }
+
+                double newSubtotal = newQty * p.getPrice();
+
+                cartModel.setValueAt(newQty, i, 3);
+                cartModel.setValueAt(newSubtotal, i, 4);
+                updateTotal();
+                return;
+            }
+        }
+
+        // Check Stock for new item
+        if (p.getStockQuantity() <= 0) {
+            JOptionPane.showMessageDialog(this, "Out of Stock!");
+            return;
+        }
+
+        // Add new Row: [ID, Name, Price, Qty, Subtotal]
+        cartModel.addRow(new Object[]{
+                p.getId(),
+                p.getName(),
+                p.getPrice(),
+                1,
+                p.getPrice() // Subtotal is price * 1 initially
+        });
+
+        updateTotal();
+    }
+
+    private void updateTotal() {
+        double total = 0;
+        for (int i = 0; i < cartModel.getRowCount(); i++) {
+            total += Double.parseDouble(cartModel.getValueAt(i, 4).toString());
+        }
+        totalLabel.setText("Total: $" + String.format("%.2f", total));
+    }
+
+    // ==========================================
+    // 3. PAYMENT LOGIC
+    // ==========================================
+    private void handlePayment(ActionEvent e) {
+        if (cartModel.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Cart is empty!");
+            return;
+        }
+
+        try {
+            int cashierId = (currentUser != null) ? currentUser.getId() : 1;
+            Sale sale = new Sale(cashierId);
+
+            double totalAmount = 0;
+
+            for (int i = 0; i < cartModel.getRowCount(); i++) {
+                // Correct Column Mapping based on my "cols" array above
+                // 0:ID, 1:Name, 2:Price, 3:Qty, 4:Subtotal
+
+                int pId = Integer.parseInt(cartModel.getValueAt(i, 0).toString());
+                double price = Double.parseDouble(cartModel.getValueAt(i, 2).toString());
+                int qty = Integer.parseInt(cartModel.getValueAt(i, 3).toString());
+                double subtotal = Double.parseDouble(cartModel.getValueAt(i, 4).toString());
+
+                SaleItem item = new SaleItem(pId, sale.getSaleID(), price, qty);
+                sale.addItem(item);
+
+                totalAmount += subtotal;
+            }
+
+            sale.setTotalAmount(totalAmount);
+            // NOTE: Check if your Sale model uses 'setTotal' or 'setTotalAmount'
+
+            // Backend Call
+            SaleDAO saleDAO = new SaleDAO();
+            if (saleDAO.processSale(sale)) {
+                JOptionPane.showMessageDialog(this, "Sale Successful!");
+                cartModel.setRowCount(0); // Clear Cart
+                totalLabel.setText("Total: $0.00");
+                loadProductsFromDB(); // REFRESH STOCK ON UI BUTTONS!
+            } else {
+                JOptionPane.showMessageDialog(this, "Transaction Failed.");
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+        }
+    }
+}
