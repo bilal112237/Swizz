@@ -1,6 +1,15 @@
-Swizz - Point of Sale (POS) System
-Author: M. Bilal Zaki
-Project Type: Java Swing Application with MySQL Database
+<p align="center">
+  <img src="link-to-your-banner-image.png" alt="Swizz POS Banner" width="100%">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" />
+  <img src="https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Swing-GUI-blue?style=for-the-badge" />
+</p>
+
+<h1 align="center">Swizz - Point of Sale (POS) System</h1>
+
 
 Project Overview
 Swizz is a comprehensive Point of Sale (POS) software architecture designed to streamline inventory management, process retail sales, and maintain secure access control. Developed entirely in Java, the application utilizes Java Swing for a responsive graphical user interface and MySQL for robust, relational data persistence.
