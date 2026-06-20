@@ -34,32 +34,6 @@ Encapsulation: All entity models (Product, Sale, User, etc.) use strictly privat
 
 Design Patterns (DAO): Heavy utilization of the Data Access Object (DAO) pattern. Database interactions are abstracted away from the UI into dedicated classes (ProductDAO, SaleDAO, UserDAO, ReportDAO), ensuring the frontend only deals with Java objects, not SQL queries.
 
-Directory Structure:
-
-src/
-├── dao/                 # Data Access Objects (SQL queries and DB interactions)
-│   ├── ProductDAO.java
-│   ├── ReportDAO.java
-│   ├── SaleDAO.java
-│   └── UserDAO.java
-├── db/                  # Database connectivity
-│   └── DBConnection.java
-├── frontend/            # Java Swing UI Components
-│   ├── AddProductDialog.java
-│   ├── AdminDashboardUI.java
-│   ├── LoginPage.java
-│   └── ModernPOSDashboard.java
-├── menu/                # Menu configuration and assets
-├── model/               # Entity classes (The Data Models)
-│   ├── Admin.java
-│   ├── Cashier.java
-│   ├── Product.java
-│   ├── Sale.java
-│   ├── SaleItem.java
-│   └── User.java        (Abstract Base Class)
-├── service/             # Business logic layer
-│   ├── ProductService/            
-└── Main.java            # Application Entry Point (SwingUtilities.invokeLater)
 🗄️ Database Schema (pos_1)
 The system relies on a tightly normalized relational database to track all operations:
 
