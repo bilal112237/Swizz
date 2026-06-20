@@ -110,7 +110,6 @@ public class ProductDAO {
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             // Tip: This might fail if the product has already been sold (Foreign Key constraint).
-            // For a semester project, you can catch this and print "Cannot delete sold item".
             e.printStackTrace();
             return false;
         }catch (Exception e){

@@ -1,4 +1,5 @@
 package frontend;
+
 import dao.ProductDAO;
 import dao.ReportDAO;
 import model.Product;
@@ -11,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AdminDashboardUI extends JFrame {
-    JTable table ;
+    JTable table;
 
     private JPanel contentPanel = new JPanel();
     private JTable salesTable = new JTable();
@@ -19,7 +20,7 @@ public class AdminDashboardUI extends JFrame {
 
     public AdminDashboardUI() {
         setTitle("Swizz | Admin Dashboard");
-        setSize(1000, 600);
+        setSize(1000, 900); // Slightly taller to ensure buttons are visible
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -48,9 +49,8 @@ public class AdminDashboardUI extends JFrame {
 
         btnDashboard.addActionListener(e -> showDashboard());
         btnAdd.addActionListener(e -> openAddProductDialog());
-        btnReports.addActionListener(e -> showSalesReport());//sale report button functionality
+        btnReports.addActionListener(e -> showSalesReport());// sale report button functionality
         btnLogout.addActionListener(e -> handleLogout());
-
 
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setBackground(Color.WHITE);
@@ -68,35 +68,20 @@ public class AdminDashboardUI extends JFrame {
         topBar.add(title, BorderLayout.WEST);
         topBar.add(adminName, BorderLayout.EAST);
 
-        // ===== CONTENT AREA =====
+        // ===== CONTENT AREA SETUP =====
         contentPanel = new JPanel();
         contentPanel.setBackground(new Color(245, 246, 250));
         contentPanel.setLayout(new BorderLayout());
         contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        // ----- CARDS -----
-        JPanel cards = new JPanel(new GridLayout(1, 3, 20, 0));
-        cards.add(createStatCard("Total Products", "120"));
-        cards.add(createStatCard("Total Sales", "$45,200"));
-        cards.add(createStatCard("Users", "8"));
-
-        // ----- TABLE -----
-        String[] cols = {"ID", "Product Name", "Price", "Stock"};
-        DefaultTableModel model = new DefaultTableModel(cols, 0);
-        table = new JTable(model);
-        table.setRowHeight(26);
-
-        JScrollPane tableScroll = new JScrollPane(table);
-
-        contentPanel.add(cards, BorderLayout.NORTH);
-        contentPanel.add(tableScroll, BorderLayout.CENTER);
-
-        // ===== ADD TO FRAME =====
+        
+        
+        // ===== ADD MAIN PANELS TO FRAME =====
         add(sidebar, BorderLayout.WEST);
         add(topBar, BorderLayout.NORTH);
         add(contentPanel, BorderLayout.CENTER);
-
-        loadDataIntoTable();
+        
+        // Load the dashboard layout (Cards, Table, and Buttons) immediately on boot
+        showDashboard();
 
         setVisible(true);
     }
@@ -113,24 +98,49 @@ public class AdminDashboardUI extends JFrame {
         return btn;
     }
 
-    private void showDashboard() {
+private void showDashboard() {
+        // 1. Clear the panel
         contentPanel.removeAll();
 
+        // 2. Build the Cards (TOP)
         JPanel cards = new JPanel(new GridLayout(1, 3, 20, 0));
         cards.add(createStatCard("Total Products", "120"));
-        cards.add(createStatCard("Total Sales", "$45,200"));
+        cards.add(createStatCard("Total Sales", "$100,200"));
         cards.add(createStatCard("Users", "8"));
 
-        String[] cols = {"ID", "Product Name", "Price", "Stock"};
+        // 3. Build the Table (CENTER)
+        String[] cols = { "ID", "Product Name", "Price", "Stock" };
         DefaultTableModel model = new DefaultTableModel(cols, 0);
         table = new JTable(model);
         table.setRowHeight(26);
-
         JScrollPane tableScroll = new JScrollPane(table);
 
+        // 4. Build the Action Buttons (BOTTOM)
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        actionPanel.setBackground(new Color(245, 246, 250));
+
+        JButton btnEdit = new JButton("Edit Selected");
+        btnEdit.setBackground(new Color(33, 150, 243));
+        btnEdit.setForeground(Color.WHITE);
+        btnEdit.setFocusPainted(false);
+
+        JButton btnDelete = new JButton("Delete Selected");
+        btnDelete.setBackground(new Color(244, 67, 54));
+        btnDelete.setForeground(Color.WHITE);
+        btnDelete.setFocusPainted(false);
+
+        btnEdit.addActionListener(e -> editSelectedProduct());
+        btnDelete.addActionListener(e -> deleteSelectedProduct());
+
+        actionPanel.add(btnEdit);
+        actionPanel.add(btnDelete);
+
+        // 5. Add all three pieces to the contentPanel
         contentPanel.add(cards, BorderLayout.NORTH);
         contentPanel.add(tableScroll, BorderLayout.CENTER);
+        contentPanel.add(actionPanel, BorderLayout.SOUTH); 
 
+        // 6. Load data and refresh UI
         loadDataIntoTable();
 
         contentPanel.revalidate();
@@ -144,7 +154,7 @@ public class AdminDashboardUI extends JFrame {
         title.setFont(new Font("Segoe UI", Font.BOLD, 22));
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
 
-        String[] cols = {"Sale ID", "Date", "Total Amount", "Cashier"};
+        String[] cols = { "Sale ID", "Date", "Total Amount", "Cashier" };
         DefaultTableModel model = new DefaultTableModel(cols, 0);
         salesTable = new JTable(model);
         salesTable.setRowHeight(26);
@@ -162,8 +172,7 @@ public class AdminDashboardUI extends JFrame {
                 if (e.getClickCount() == 2) {
                     int row = salesTable.getSelectedRow();
                     int saleId = Integer.parseInt(
-                            salesTable.getValueAt(row, 0).toString()
-                    );
+                            salesTable.getValueAt(row, 0).toString());
                     showSaleDetailsDialog(saleId);
                 }
             }
@@ -171,6 +180,108 @@ public class AdminDashboardUI extends JFrame {
 
         contentPanel.revalidate();
         contentPanel.repaint();
+    }
+
+// ===== UPDATE LOGIC =====
+    private void editSelectedProduct() {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a product from the table to edit.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 1. Extract the current data from the selected row
+        int id = Integer.parseInt(table.getValueAt(row, 0).toString());
+        String currentName = table.getValueAt(row, 1).toString();
+        String currentPrice = table.getValueAt(row, 2).toString();
+        String currentStock = table.getValueAt(row, 3).toString();
+
+        // 2. Create input fields pre-filled with the current data
+        JTextField nameField = new JTextField(currentName);
+        JTextField priceField = new JTextField(currentPrice);
+        JTextField stockField = new JTextField(currentStock);
+
+        Object[] message = {
+            "Product Name:", nameField,
+            "Price:", priceField,
+            "Stock:", stockField
+        };
+
+        // 3. Show the dialog box to the user
+        int option = JOptionPane.showConfirmDialog(this, message, "Edit Product (ID: " + id + ")", JOptionPane.OK_CANCEL_OPTION);
+        
+        if (option == JOptionPane.OK_OPTION) {
+            try {
+                // 4. Parse the new values entered by the admin
+                String newName = nameField.getText();
+                double newPrice = Double.parseDouble(priceField.getText());
+                int newStock = Integer.parseInt(stockField.getText());
+
+                // 5. Create a Product object with the updated info
+                // (If your Product class requires a different constructor, adjust this line)
+                Product updatedProduct = new Product();
+                updatedProduct.setId(id);
+                updatedProduct.setName(newName);
+                updatedProduct.setPrice(newPrice);
+                updatedProduct.setStockQuantity(newStock);
+
+                // 6. Call the backend DAO
+                ProductDAO dao = new ProductDAO();
+                boolean success = dao.updateProduct(updatedProduct);
+
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Product updated successfully!");
+                    loadDataIntoTable(); // Refresh the visual table to show the new values
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to update product in the database.", "Update Error", JOptionPane.ERROR_MESSAGE);
+                }
+
+            } catch (NumberFormatException ex) {
+                // Catch the error if the admin types "abc" into the Price or Stock fields
+                JOptionPane.showMessageDialog(this, "Invalid number format! Please ensure Price and Stock are valid numbers.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Database Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+// ===== DELETE LOGIC =====
+    private void deleteSelectedProduct() {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a product from the table to delete.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Extract ID and Name from the selected row
+        int id = Integer.parseInt(table.getValueAt(row, 0).toString());
+        String name = table.getValueAt(row, 1).toString();
+
+        // Confirm deletion with the admin
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Are you sure you want to permanently delete '" + name + "'?", 
+            "Confirm Deletion", 
+            JOptionPane.YES_NO_OPTION, 
+            JOptionPane.WARNING_MESSAGE);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            ProductDAO dao = new ProductDAO();
+            
+            // Call your backend DAO method
+            boolean success = dao.deleteProduct(id);
+
+            if (success) {
+                // If the database successfully deleted it
+                JOptionPane.showMessageDialog(this, "Product deleted successfully.");
+                loadDataIntoTable(); // Refresh table to remove deleted item visually
+            } else {
+                // If it failed (likely due to the Foreign Key constraint from the Sales table)
+                JOptionPane.showMessageDialog(this, 
+                    "Failed to delete product.\nIt might be linked to existing sales records.", 
+                    "Deletion Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     private void openAddProductDialog() {
@@ -181,18 +292,17 @@ public class AdminDashboardUI extends JFrame {
         showDashboard();
     }
 
-
     private void loadSalesReport(DefaultTableModel model) {
         model.setRowCount(0);
 
         List<String[]> report = reportDAO.getSalesReport();
 
         for (String[] row : report) {
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     row[0], // Sale ID
                     row[1], // Date
                     row[2], // Total
-                    row[3]  // Cashier
+                    row[3] // Cashier
             });
         }
     }
@@ -248,7 +358,7 @@ public class AdminDashboardUI extends JFrame {
         return card;
     }
 
-    public void handleLogout(){
+    public void handleLogout() {
         dispose();
         new LoginPage();
     }

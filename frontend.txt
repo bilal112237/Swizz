@@ -99,39 +99,10 @@ public class ModernPOSDashboard extends JFrame {
         cartPanel.add(cartTitle, BorderLayout.NORTH);
         cartPanel.add(tableScroll, BorderLayout.CENTER);
 
-// --- ADDED: CART ACTION BUTTONS ---
-        JButton btnRemove = new JButton("Remove Item");
-        btnRemove.setBackground(new Color(244, 67, 54)); // Material Red
-        btnRemove.setForeground(Color.WHITE);
-        btnRemove.setFocusPainted(false);
-        btnRemove.setFont(new Font("Segoe UI", Font.BOLD, 12));
-
-        JButton btnUpdateQty = new JButton("Update Qty");
-        btnUpdateQty.setBackground(new Color(255, 152, 0)); // Material Orange
-        btnUpdateQty.setForeground(Color.WHITE);
-        btnUpdateQty.setFocusPainted(false);
-        btnUpdateQty.setFont(new Font("Segoe UI", Font.BOLD, 12));
-
-        // Attach to your existing methods at the bottom of the file
-        btnRemove.addActionListener(e -> removeSelectedCartItem());
-        btnUpdateQty.addActionListener(e -> updateSelectedCartItemQuantity());
-
-        // Create a small grid panel to hold them side-by-side
-        JPanel actionPanel = new JPanel(new GridLayout(1, 2, 5, 0));
-        actionPanel.setBackground(Color.WHITE);
-        actionPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        actionPanel.add(btnUpdateQty);
-        actionPanel.add(btnRemove);
-        // ----------------------------------
-
-        // Rebuild the bottom panel with the new buttons included
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(Color.WHITE);
-        bottomPanel.add(actionPanel, BorderLayout.NORTH); // Buttons on top
-        bottomPanel.add(totalLabel, BorderLayout.CENTER); // Total in middle
-        bottomPanel.add(payBtn, BorderLayout.SOUTH);      // Pay button on bottom
-
-        cartPanel.add(bottomPanel, BorderLayout.SOUTH);
+        bottomPanel.add(totalLabel, BorderLayout.CENTER);
+        bottomPanel.add(payBtn, BorderLayout.SOUTH);
 
         cartPanel.add(bottomPanel, BorderLayout.SOUTH);
 

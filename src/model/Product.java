@@ -25,6 +25,10 @@ public class Product {
         this.category = category;
     }
 
+    public void setStockQuantity(int q){
+        this.stock_quantity = q;
+    }
+
     public int getId() {
         return id;
     }
